@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<launch>
+    <arg name="image_topic" default="image_raw"/>
+    <arg name="rect_topic" default="rect"/>
+    <arg name="save_prefix"/>
+    <arg name="node_name"/>
+    <arg name="min_height" default="10"/>
+    <arg name="min_width" default="10"/>
+    <arg name="margin" default="30"/>
+
+    <node pkg="object_rect_image_saver" type="object_rect_image_saver_node" name="$(arg node_name)" output="screen" respawn="false" respawn_delay="0">
+        <param name="image_topic" value="$(arg image_topic)"/>
+        <param name="rect_topic" value="$(arg rect_topic)"/>
+        <param name="save_prefix" value="$(arg save_prefix)"/>
+        <param name="min_height" value="$(arg min_height)"/>
+        <param name="min_width" value="$(arg min_width)"/>
+        <param name="margin" value="$(arg margin)"/>
+    </node>
+</launch>
