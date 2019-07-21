@@ -11,5 +11,6 @@ int main(int argc, char *argv[])
     ros::NodeHandle pnh("~");
     ObjectRectImageSaver saver(nh,pnh);
     ros::spin();
+    saver.outputAnnotation();
     return 0;
 }

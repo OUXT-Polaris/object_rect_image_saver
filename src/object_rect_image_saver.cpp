@@ -18,7 +18,13 @@ ObjectRectImageSaver::ObjectRectImageSaver(ros::NodeHandle nh,ros::NodeHandle pn
     const bool result = fs::create_directories(path, error);
     if (!result || error)
     {
-        ROS_WARN_STREAM("failed to make directory.");
+        ROS_WARN_STREAM("failed to make directory. :");
+    }
+    const fs::path path_raw(save_prefix_+"/.raw");
+    const bool result_raw = fs::create_directories(path_raw, error);
+    if (!result_raw || error)
+    {
+        ROS_WARN_STREAM("failed to make directory. :" << save_prefix_ << "/.raw");
     }
     image_sub_ptr_ = std::unique_ptr<ImageSubscriber>(new ImageSubscriber(nh_, image_topic_, 10));
     rect_sub_ptr_ = std::unique_ptr<RectSubscriber>(new RectSubscriber(nh_, rect_topic_, 10));
@@ -47,15 +53,18 @@ void ObjectRectImageSaver::callback(const sensor_msgs::Image::ConstPtr image,con
     cv::Mat cv_image = cv_ptr->image;
     int height = cv_image.rows;
     int width = cv_image.cols;
+    bool write_succeed = false;
+    int count = 0;
+    std::vector<std::pair<cv::Rect,std::string> > rect_image_pairs;
     for(auto itr = rect->rects.begin(); itr != rect->rects.end(); itr++)
     {
         if(itr->height > min_height_ && itr->width > min_width_)
         {
-            if((itr->x+itr->width)<0)
+            if((itr->x+itr->width)<0 || (itr->x+itr->width)>width)
             {
                 continue;
             }
-            if((itr->y+itr->height)<0)
+            if((itr->y+itr->height)<0 || (itr->y+itr->height)>height)
             {
                 continue;
             }
@@ -79,12 +88,15 @@ void ObjectRectImageSaver::callback(const sensor_msgs::Image::ConstPtr image,con
                     cv_rect.y = 0;
                 }
                 cv::Mat cv_cut_img(cv_image,cv_rect);
-                std::string image_filename = save_prefix_+"/"+std::to_string(image_count_)+".png";
+                std::string image_filename = save_prefix_+"/"+std::to_string(image_count_)+"_"+std::to_string(count)+".png";
                 bool result = cv::imwrite(image_filename,cv_cut_img);
                 if(result)
                 {
                     ROS_INFO_STREAM(image_filename << " saved");
-                    image_count_ = image_count_ + 1;
+                    std::pair<cv::Rect,std::string> rect_image_pair = std::make_pair(cv_rect,image_filename);
+                    rect_image_pairs.push_back(rect_image_pair);
+                    count = count + 1;
+                    write_succeed = true;
                 }
                 else
                 {
@@ -97,4 +109,43 @@ void ObjectRectImageSaver::callback(const sensor_msgs::Image::ConstPtr image,con
             }
         }
     }
+    if(write_succeed)
+    {
+        std::string image_filename = save_prefix_+"/.raw/"+std::to_string(image_count_)+".png";
+        bool result = cv::imwrite(image_filename,cv_image);
+        if(!result)
+        {
+            ROS_WARN_STREAM("failed to save raw image : " << image_filename);
+            return;
+        }
+        else
+        {
+            ROS_INFO_STREAM("save to " << image_filename);
+        }
+        image_count_ = image_count_ + 1;
+        boost::property_tree::ptree image_tree;
+        int cnt = 0;
+        for(auto itr = rect_image_pairs.begin(); itr != rect_image_pairs.end(); itr++)
+        {
+            boost::property_tree::ptree rect_tree;
+            std::string key = std::to_string(cnt) + ".rect.x";
+            rect_tree.put(key, itr->first.x);
+            key = std::to_string(cnt) + ".rect.y";
+            rect_tree.put(key, itr->first.y);
+            key = std::to_string(cnt) + ".rect.width";
+            rect_tree.put(key, itr->first.width);
+            key = std::to_string(cnt) + ".rect.height";
+            rect_tree.put(key, itr->first.height);
+            image_tree.push_back(std::make_pair("",rect_tree));
+            cnt = cnt + 1;
+        }
+        pt_.add_child(std::to_string(image_count_), image_tree);
+    }
+}
+
+void ObjectRectImageSaver::outputAnnotation()
+{
+    ROS_INFO_STREAM("output annotation file");
+    write_json(save_prefix_+"/annotation.json", pt_);
+    return;
 }

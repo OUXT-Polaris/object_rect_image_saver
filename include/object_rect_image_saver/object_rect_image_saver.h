@@ -19,6 +19,10 @@
 
 // Headers in Boost
 #include <boost/filesystem.hpp>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/json_parser.hpp>
+#include <boost/foreach.hpp>
+#include <boost/optional.hpp>
 
 typedef message_filters::Subscriber<sensor_msgs::Image> ImageSubscriber;
 typedef message_filters::Subscriber<jsk_recognition_msgs::RectArray> RectSubscriber;
@@ -30,6 +34,7 @@ class ObjectRectImageSaver
 public:
     ObjectRectImageSaver(ros::NodeHandle nh,ros::NodeHandle pnh);
     ~ObjectRectImageSaver();
+    void outputAnnotation();
 private:
     ros::NodeHandle nh_;
     ros::NodeHandle pnh_;
@@ -44,6 +49,7 @@ private:
     int min_height_;
     int min_width_;
     int margin_;
+    boost::property_tree::ptree pt_;
 };
 
 #endif  //OBJECT_RECT_IMAGE_SAVER_H_OBJECT_RECT_IMAGE_SAVER_H_INCLUDED
