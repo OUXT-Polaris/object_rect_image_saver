@@ -122,7 +122,6 @@ void ObjectRectImageSaver::callback(const sensor_msgs::Image::ConstPtr image,con
         {
             ROS_INFO_STREAM("save to " << image_filename);
         }
-        image_count_ = image_count_ + 1;
         boost::property_tree::ptree image_tree;
         int cnt = 0;
         for(auto itr = rect_image_pairs.begin(); itr != rect_image_pairs.end(); itr++)
@@ -140,6 +139,7 @@ void ObjectRectImageSaver::callback(const sensor_msgs::Image::ConstPtr image,con
             cnt = cnt + 1;
         }
         pt_.add_child(std::to_string(image_count_), image_tree);
+        image_count_ = image_count_ + 1;
     }
 }
 
@@ -147,5 +147,15 @@ void ObjectRectImageSaver::outputAnnotation()
 {
     ROS_INFO_STREAM("output annotation file");
     write_json(save_prefix_+"/annotation.json", pt_);
+    std::string path = ros::package::getPath("object_rect_image_saver")+"/scripts/generate_dataset.py";
+    const boost::filesystem::path dest(save_prefix_+"/generate_dataset.py");
+    try
+    {
+        boost::filesystem::copy_file(path, dest);
+    }
+    catch (boost::filesystem::filesystem_error& ex)
+    {
+        ROS_ERROR_STREAM(ex.what());
+    }
     return;
 }

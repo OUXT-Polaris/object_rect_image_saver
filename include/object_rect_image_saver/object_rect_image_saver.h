@@ -10,6 +10,7 @@
 #include <jsk_recognition_msgs/RectArray.h>
 #include <image_transport/image_transport.h>
 #include <cv_bridge/cv_bridge.h>
+#include <ros/package.h>
 
 // Headers in STL
 #include <memory>
