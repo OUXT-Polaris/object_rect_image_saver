@@ -3,6 +3,7 @@ import argparse
 import os
 import shutil
 import random
+import cv2
 
 def touch(path):
     if os.path.isfile(path):
@@ -139,11 +140,13 @@ class DarknetDatasetGenerator(DatasetGenerator):
             touch(name+".txt")
         for rect in self.rects:
             raw_image = rect[1].getRawImageFilename()
+            img_data = cv2.imread("../dataset_darknet/dataset/"+raw_image, cv2.IMREAD_UNCHANGED)
+            height, width, channels = img_data.shape[:3]
             name, ext = os.path.splitext("../dataset_darknet/dataset/"+raw_image)
             with open(name+".txt", 'a') as f:
                 x = int(float(rect[1].x)+float(rect[1].width)/2.0)
                 y = int(float(rect[1].y)+float(rect[1].height)/2.0)
-                line = str(rect[0]) + " " + str(x) + " " + str(y) + " " + rect[1].width + " " + rect[1].height + "\n"
+                line = str(rect[0]) + " " + str(float(x)/width) + " " + str(float(y)/height) + " " + str(float(rect[1].width)/width) + " " + str(float(rect[1].height)/height) + "\n"
                 f.write(line)
 
 if __name__ == "__main__":
