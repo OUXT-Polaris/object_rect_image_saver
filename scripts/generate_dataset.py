@@ -2,6 +2,7 @@ import json
 import argparse
 import os
 import shutil
+import random
 
 def touch(path):
     if os.path.isfile(path):
@@ -83,6 +84,7 @@ class DatasetGenerator:
 
 class DarknetDatasetGenerator(DatasetGenerator):
     def generate(self,test_ratio):
+        self.test_ratio = test_ratio
         if os.path.exists(os.path.abspath("../dataset_darknet")):
             shutil.rmtree(os.path.abspath("../dataset_darknet"))
         os.mkdir("../dataset_darknet")
@@ -92,6 +94,25 @@ class DarknetDatasetGenerator(DatasetGenerator):
         self.generateNameFile()
         self.generateDotData()
         self.copyData()
+        self.splitDataset()
+    def splitDataset(self):
+        touch("../dataset_darknet/train.txt")
+        touch("../dataset_darknet/test.txt")
+        raw_images = []
+        for rect in self.rects:
+            raw_images.append(rect[1].getRawImageFilename())
+        raw_images = set(raw_images)
+        prefix = os.path.abspath("../dataset_darknet/dataset")
+        print(prefix)
+        for raw_image in raw_images:
+            if random.uniform(0,1) < self.test_ratio:
+                with open("../dataset_darknet/test.txt", 'a') as f:
+                    f.write(prefix+"/"+raw_image+"\n")
+            else:
+                with open("../dataset_darknet/train.txt", 'a') as f:
+                    f.write(prefix+"/"+raw_image+"\n")  
+
+        #random.uniform
     def generateNameFile(self):
         touch('../dataset_darknet/dataset.names')
         f = open('../dataset_darknet/dataset.names','w')
@@ -102,10 +123,10 @@ class DarknetDatasetGenerator(DatasetGenerator):
         touch('../dataset_darknet/dataset.data')
         f = open('../dataset_darknet/dataset.data','w')
         f.write("classes= "+str(len(self.class_and_id))+"\n")
-        f.write("train  = train.txt\n")
-        f.write("valid  = test.txt\n")
-        f.write("names = dataset.names\n")
-        f.write("backup = " + os.path.abspath("../dataset_darknet/backup"))
+        f.write("train  = " + os.path.abspath("../dataset_darknet/train.txt") + "\n")
+        f.write("valid  = " + os.path.abspath("../dataset_darknet/test.txt") + "\n")
+        f.write("names = " + os.path.abspath("../dataset_darknet/dataset.names") + "\n")
+        f.write("backup = " + os.path.abspath("../dataset_darknet/backup") + "\n")
         f.close()
     def copyData(self):
         raw_images = []
