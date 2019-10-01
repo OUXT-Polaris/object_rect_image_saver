@@ -149,14 +149,44 @@ class DarknetDatasetGenerator(DatasetGenerator):
                 line = str(rect[0]) + " " + str(float(x)/width) + " " + str(float(y)/height) + " " + str(float(rect[1].width)/width) + " " + str(float(rect[1].height)/height) + "\n"
                 f.write(line)
 
+class KerasImageDataGeneratorDatasetGenerator(DatasetGenerator):
+    def generate(self,test_ratio):
+        self.test_ratio = test_ratio
+        if os.path.exists(os.path.abspath("../Images")):
+            shutil.rmtree(os.path.abspath("../Images"))
+        os.mkdir("../Images")
+        dirs = os.listdir(".")
+        target_dirs = []
+        for directory in dirs:
+            if directory == "generate_dataset.py":
+                continue
+            if directory == "annotation.json":
+                continue
+            if directory == ".raw":
+                continue
+            target_dirs.append(directory)
+        for target_dir in target_dirs:
+            os.mkdir("../Images/"+target_dir)
+            os.mkdir("../Images/"+target_dir+"/Train")
+            os.mkdir("../Images/"+target_dir+"/Test")
+            image_lists = os.listdir("./"+target_dir)
+            for image in image_lists:
+                if random.uniform(0,1) < self.test_ratio:
+                    shutil.copy("./"+target_dir+"/"+image, "../Images/"+target_dir+"/Test/"+image)
+                else:
+                    shutil.copy("./"+target_dir+"/"+image, "../Images/"+target_dir+"/Train/"+image)
+
 if __name__ == "__main__":
-    formats = ["darknet"]
+    formats = ["darknet","keras_image_data_generator"]
     parser = argparse.ArgumentParser(description='Dataset generator for Maritime RobotX Challenge.')
-    parser.add_argument('format', help='Dataset format, now we can use darknet format')
+    parser.add_argument('format', help='Dataset format, now we can use darknet format,keras_image_data_generator format')
     parser.add_argument('test_ratio', help='Ratio of the test image')
     args = parser.parse_args()
     if args.format not in formats:
         print("invalid format")
     if args.format == "darknet":
         gen = DarknetDatasetGenerator()
+        gen.generate(float(args.test_ratio))
+    if args.format == "keras_image_data_generator":
+        gen = KerasImageDataGeneratorDatasetGenerator()
         gen.generate(float(args.test_ratio))
