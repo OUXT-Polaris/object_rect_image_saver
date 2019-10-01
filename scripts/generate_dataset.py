@@ -165,16 +165,17 @@ class KerasImageDataGeneratorDatasetGenerator(DatasetGenerator):
             if directory == ".raw":
                 continue
             target_dirs.append(directory)
+        os.mkdir("../Images/Test")
+        os.mkdir("../Images/Train")
         for target_dir in target_dirs:
-            os.mkdir("../Images/"+target_dir)
-            os.mkdir("../Images/"+target_dir+"/Train")
-            os.mkdir("../Images/"+target_dir+"/Test")
+            os.mkdir("../Images/Test/"+target_dir)
+            os.mkdir("../Images/Train/"+target_dir)
             image_lists = os.listdir("./"+target_dir)
             for image in image_lists:
                 if random.uniform(0,1) < self.test_ratio:
-                    shutil.copy("./"+target_dir+"/"+image, "../Images/"+target_dir+"/Test/"+image)
+                    shutil.copy("./"+target_dir+"/"+image, "../Images/Test/"+target_dir+"/"+image)
                 else:
-                    shutil.copy("./"+target_dir+"/"+image, "../Images/"+target_dir+"/Train/"+image)
+                    shutil.copy("./"+target_dir+"/"+image, "../Images/Train/"+target_dir+"/"+image)
 
 if __name__ == "__main__":
     formats = ["darknet","keras_image_data_generator"]
